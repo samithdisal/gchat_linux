@@ -38,7 +38,7 @@ add_definitions(${GTK3_CFLAGS_OTHER})
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(gchat_linux main.c)
+add_executable(gchat_linux main.c external.c)
 
 # Link the target to the GTK+ libraries
 target_link_libraries(gchat_linux ${GTK3_LIBRARIES})

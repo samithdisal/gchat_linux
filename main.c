@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
+#include "external.h"
 
 
 #define COOKIE_FILE ".gchat_ckg"
@@ -90,6 +91,30 @@ static gboolean permission_request(WebKitWebView *web_view, WebKitPermissionRequ
     return TRUE;
 }
 
+static gboolean decide_policy(WebKitWebView *web_view, WebKitPolicyDecision *decision, WebKitPolicyDecisionType type) {
+    switch (type) {
+        case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
+//            WebKitNavigationPolicyDecision *navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION (decision);
+            /* Make a policy decision here. */
+            break;
+        case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
+//            WebKitNavigationPolicyDecision *navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION (decision);
+            /* Make a policy decision here. */
+            open_in_external_browser(webkit_uri_request_get_uri(webkit_navigation_action_get_request(
+                    webkit_navigation_policy_decision_get_navigation_action(WEBKIT_NAVIGATION_POLICY_DECISION(decision))
+            )));
+            break;
+        case WEBKIT_POLICY_DECISION_TYPE_RESPONSE:
+//            WebKitResponsePolicyDecision *response = WEBKIT_RESPONSE_POLICY_DECISION (decision);
+            /* Make a policy decision here. */
+            break;
+        default:
+            /* Making no decision results in webkit_policy_decision_use(). */
+            return FALSE;
+    }
+    return FALSE;
+}
+
 static void activate(GApplication *application, gpointer userdata) {
 
     create_menu(application);
@@ -112,6 +137,7 @@ static void activate(GApplication *application, gpointer userdata) {
     /* Setup notification area */
     g_signal_connect(web_view, "show-notification", G_CALLBACK(show_notification), application);
     g_signal_connect(web_view, "permission-request", G_CALLBACK(permission_request), main_window);
+    g_signal_connect(web_view, "decide-policy", G_CALLBACK(decide_policy), main_window);
 
     /* Place the WebKitWebView in the GtkScrolledWindow */
     gtk_container_add(GTK_CONTAINER(scrolled_window), web_view);
