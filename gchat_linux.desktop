@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Google Chat for Linux
+Comment=An un-official google chat client for linux
+Icon=gchat_linux
+Exec=gchat_linux
+Terminal=false
+Categories=Network
