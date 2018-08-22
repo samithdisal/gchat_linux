@@ -3,11 +3,9 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
-// Application global
-GApplication *g_application;
 
 static void quit_cb(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
-    g_application_quit(g_application);
+    g_application_quit(G_APPLICATION(user_data));
 }
 
 
@@ -59,7 +57,6 @@ int main(int argc, char **argv) {
     int status;
 
     application = gtk_application_new("com.github.samithdisal.gchat-linux", G_APPLICATION_FLAGS_NONE);
-    g_application = G_APPLICATION(application); // global instance.
     g_signal_connect(application, "activate", G_CALLBACK(activate), NULL);
     status = g_application_run(G_APPLICATION(application), argc, argv);
     g_object_unref(application);
