@@ -4,6 +4,8 @@
 #include <webkit2/webkit2.h>
 
 
+#define COOKIE_FILE ".gchat_ckg"
+
 static void quit_cb(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
     g_application_quit(G_APPLICATION(user_data));
 }
@@ -26,6 +28,50 @@ void create_menu(GApplication* application) {
     g_object_unref(menu);
 }
 
+static gboolean show_notification(WebKitWebView *web_view, WebKitNotification *notification, gpointer user_data) {
+    GNotification *gn;
+    gn = g_notification_new(webkit_notification_get_title(notification));
+    g_notification_set_body(gn, webkit_notification_get_body(notification));
+    g_application_send_notification(G_APPLICATION(user_data), webkit_notification_get_title(notification), gn);
+    g_object_unref(gn);
+    return FALSE;
+}
+
+static gboolean permission_request(WebKitWebView *web_view, WebKitPermissionRequest *request, gpointer user_data) {
+
+    if(WEBKIT_IS_NOTIFICATION_PERMISSION_REQUEST(request)) {
+        webkit_permission_request_allow(request);
+        return TRUE;
+    }
+    gchar* permissionRequestType;
+    if(WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(request)) {
+        permissionRequestType = "share geo location";
+    } else if(WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(request)) {
+        permissionRequestType = "access user media";
+    } else {
+        permissionRequestType = "non classified action";
+    }
+
+    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(user_data),
+                                                GTK_DIALOG_MODAL,
+                                                GTK_MESSAGE_QUESTION,
+                                                GTK_BUTTONS_YES_NO,
+                                                "Allow permission to %s?", permissionRequestType);
+    gtk_widget_show(dialog);
+    gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    switch (result) {
+        case GTK_RESPONSE_YES:
+            webkit_permission_request_allow(request);
+            break;
+        default:
+            webkit_permission_request_deny(request);
+            break;
+    }
+    gtk_widget_destroy (dialog);
+    return TRUE;
+}
+
 static void activate(GApplication *application, gpointer userdata) {
 
     create_menu(application);
@@ -36,7 +82,18 @@ static void activate(GApplication *application, gpointer userdata) {
     GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
     GtkWidget *web_view = webkit_web_view_new();
 
+    webkit_cookie_manager_set_accept_policy(webkit_web_context_get_cookie_manager(
+            webkit_web_view_get_context(WEBKIT_WEB_VIEW(web_view))
+            ), WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS);
+
+    webkit_cookie_manager_set_persistent_storage(
+            webkit_web_context_get_cookie_manager(webkit_web_view_get_context(WEBKIT_WEB_VIEW(web_view))),
+            COOKIE_FILE,
+            WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
+
     /* Setup notification area */
+    g_signal_connect(web_view, "show-notification", G_CALLBACK(show_notification), application);
+    g_signal_connect(web_view, "permission-request", G_CALLBACK(permission_request), main_window);
 
     /* Place the WebKitWebView in the GtkScrolledWindow */
     gtk_container_add(GTK_CONTAINER(scrolled_window), web_view);
