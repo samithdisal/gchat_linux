@@ -21,6 +21,8 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 #include "external.h"
+#include "notification.h"
+#include "preferences.h"
 
 
 #define COOKIE_FILE ".gchat_ckg"
@@ -29,9 +31,15 @@ static void quit_cb(GSimpleAction *action, GVariant *parameter, gpointer user_da
     g_application_quit(G_APPLICATION(user_data));
 }
 
+static void focus_window_db(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+    gtk_window_deiconify(gtk_application_get_active_window(GTK_APPLICATION(user_data)));
+}
+
 
 const GActionEntry application_actions[] = {
         { "quit", quit_cb },
+        { "focus-window", focus_window_db },
+        { "show-preferences", show_preferences_cb },
 };
 
 void create_menu(GApplication* application) {
@@ -39,6 +47,7 @@ void create_menu(GApplication* application) {
     g_action_map_add_action_entries(G_ACTION_MAP(application), application_actions,
                                     G_N_ELEMENTS(application_actions), application);
     menu = g_menu_new();
+//    g_menu_append(menu, "Preferences", "app.show-preferences");
     g_menu_append(menu, "Quit", "app.quit");
 
 
@@ -47,14 +56,6 @@ void create_menu(GApplication* application) {
     g_object_unref(menu);
 }
 
-static gboolean show_notification(WebKitWebView *web_view, WebKitNotification *notification, gpointer user_data) {
-    GNotification *gn;
-    gn = g_notification_new(webkit_notification_get_title(notification));
-    g_notification_set_body(gn, webkit_notification_get_body(notification));
-    g_application_send_notification(G_APPLICATION(user_data), webkit_notification_get_title(notification), gn);
-    g_object_unref(gn);
-    return FALSE;
-}
 
 static gboolean permission_request(WebKitWebView *web_view, WebKitPermissionRequest *request, gpointer user_data) {
 
@@ -147,8 +148,12 @@ static void activate(GApplication *application, gpointer userdata) {
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(web_view), "https://chat.google.com");
 
     /* Show */
-    gtk_window_set_default_size(GTK_WINDOW(main_window), 1280, 740);
-    gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
+    GdkGeometry windowProperties;
+    windowProperties.min_width = 960;
+    windowProperties.min_height = 600;
+    gtk_window_set_geometry_hints(GTK_WINDOW(main_window), NULL, &windowProperties, GDK_HINT_MIN_SIZE);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 960, 600);
+    gtk_window_set_resizable(GTK_WINDOW(main_window), TRUE);
     gtk_window_set_title(GTK_WINDOW(main_window), "Google Chat");
     gtk_widget_show_all(main_window);
 }
