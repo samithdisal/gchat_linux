@@ -25,7 +25,7 @@ gboolean show_notification(WebKitWebView *web_view, WebKitNotification *notifica
     gn = g_notification_new(webkit_notification_get_title(notification));
     g_notification_set_body(gn, webkit_notification_get_body(notification));
     g_notification_set_default_action (gn, "app.focus-window");
-    g_notification_set_priority(gn, G_NOTIFICATION_PRIORITY_HIGH);
+    g_notification_set_priority(gn, G_NOTIFICATION_PRIORITY_URGENT);
     g_application_send_notification(G_APPLICATION(user_data), webkit_notification_get_title(notification), gn);
     g_object_unref(gn);
     return FALSE;
