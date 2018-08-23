@@ -22,7 +22,7 @@ project(gchat_linux C)
 
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 2)
-set(PATCH_VERSION 0)
+set(PATCH_VERSION 1)
 
 # Use the package PkgConfig to detect GTK+ headers/library files
 find_package(PkgConfig REQUIRED)
